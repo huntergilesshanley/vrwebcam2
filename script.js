@@ -13,15 +13,17 @@ let FeedSettingsToggle = true;
 let CancelStreamFeed = false;
 let resize = () => {
     feed.width = window.innerWidth;
-    display.width = window.innerWidth;
-    rightEye.width = window.innerWidth;
+    display.width = window.innerWidth / 2;
+    rightEye.width = window.innerWidth / 2;
     display.height = window.innerHeight;
     feed.height = window.innerHeight;
     rightEye.height = window.innerHeight;
+    CancelStreamFeed=true;
 };
 
 window.addEventListener("resize", resize);
 resize();
+CancelStreamFeed = false;
 
 document.addEventListener("click", ProcessClick);
 
@@ -141,17 +143,17 @@ function streamFeed() {
 
     var imageData;
 
-    feedContext.drawImage(video, 0, 0, display.width, display.height);
-    //rightEyeContext.drawImage(video, 0, 0, display.width, display.height);
-    imageData = feedContext.getImageData(0, 0, display.width, display.height);
+    feedContext.drawImage(video, 0, 0, window.innerWidth, display.height);
+    //rightEyeContext.drawImage(video, 0, 0, window.innerWidth, display.height);
+    imageData = feedContext.getImageData(0, 0, window.innerWidth, display.height);
 
 
     if (typeof currentEffect !== 'undefined') {
         imageData.data.set(currentEffect.routine(new Uint8ClampedArray(imageData.data), imageData.width, imageData.height));
 
     }
-    displayContext.putImageData(imageData, 0, 0);
-    rightEyeContext.putImageData(imageData, 0, 0);
+    displayContext.putImageData(imageData, -window.innerWidth/4, 0);
+    rightEyeContext.putImageData(imageData,  -window.innerWidth/4, 0);
 }
 
 
@@ -197,6 +199,33 @@ SW S SE
                    GREEN = GREEN *5%255;
 
                    
+                    finaldata[j] = RED*5%255;
+                    finaldata[j + 1] = BLUE*5%255
+                    finaldata[j + 2] = GREEN *5%255;
+
+                
+                }
+                return finaldata;
+            }
+        },
+        {
+            name: "LSDBLACK", routine: (data, width, height) => {
+                let finaldata = data;
+                for (j = 0; j < data.length; j += 4) {
+                   let RED = data[j];
+                   let BLUE = data[j+1];
+                   let GREEN = data[j+2];
+
+                if(RED > (BLUE + GREEN) / 1.7 || GREEN > (BLUE + RED) / 1.7|| BLUE > (RED + GREEN) / 1.7) {
+                    finaldata[j] = 0;
+                    finaldata[j + 1] = 0;
+                    finaldata[j + 2] =0;
+
+                   continue;
+                }
+                RED= RED*5%255;
+                BLUE = BLUE*5%255
+               GREEN = GREEN *5%255;
                     finaldata[j] = RED*5%255;
                     finaldata[j + 1] = BLUE*5%255
                     finaldata[j + 2] = GREEN *5%255;
