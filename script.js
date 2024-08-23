@@ -162,33 +162,14 @@ function streamFeed() {
 
 
 
-(() => {
 
-    video.style.display = 'none';
-    feed.style.display = 'none';
 
+   
 
 
 
-    navigator.getUserMedia || (navigator.getUserMedia = navigator.mozGetUserMedia || navigator.webkitGetUserMedia || navigator.msGetUserMedia);
-
-    window.requestAnimationFrame || (window.requestAnimationFrame = window.webkitRequestAnimationFrame ||
-        window.mozRequestAnimationFrame ||
-        window.oRequestAnimationFrame ||
-        window.msRequestAnimationFrame ||
-        function (callback) {
-            window.setTimeout(callback, 1000 /* / 60*/);
-        });
-
-    play();
-    
-
-    setupEffectsButtons();
-})();
 
 
-
-function setupEffectsButtons() {
 
     var effects = [
         {
@@ -429,7 +410,7 @@ function setupEffectsButtons() {
                 )
             )
         );
-
+CurrentDeviceId = Devices[0].deviceId;
       
         
         document.querySelector("#settings").appendChild(
@@ -442,11 +423,15 @@ function setupEffectsButtons() {
             )
         );
 
+        video.style.display = 'none';
+        feed.style.display = 'none';
+    
+    
+        play();
         
+    
     })();
 
     
-    var effectButton;
-
-   
-}
+ 
+  
