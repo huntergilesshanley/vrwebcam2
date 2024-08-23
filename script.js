@@ -20,7 +20,7 @@ let resize = () => {
     rightEye.height = window.innerHeight;
 };
 
-document.addEventListener("resize", resize);
+window.addEventListener("resize", resize);
 resize();
 
 document.addEventListener("click", ProcessClick);
