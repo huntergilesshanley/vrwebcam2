@@ -9,7 +9,7 @@ var rightEyeContext = rightEye.getContext('2d');
 let currentEffect;
 
 let FeedSettingsToggle = true;
-
+let CancelStreamFeed = false;
 let resize = () => {
     feed.width = window.innerWidth;
     display.width = window.innerWidth;
@@ -59,7 +59,7 @@ function CreateSelectElement(Options) {
         Options[SelectElement.selectedIndex].Method();
     });
 
-    Options[0].Method();
+    // Options[0].Method();
 
     return SelectElement;
 }
@@ -127,6 +127,12 @@ function onSuccess(stream) {
 
 function streamFeed() {
 
+    if(CancelStreamFeed) {
+        CreateStreamFeed = false;
+        play();
+        return;
+    }
+
     requestAnimationFrame(streamFeed);
 
     var feedContext = feed.getContext('2d');
@@ -175,6 +181,7 @@ function streamFeed() {
         });
 
     play();
+    
 
     setupEffectsButtons();
 })();
@@ -413,7 +420,9 @@ function setupEffectsButtons() {
                             Text: Device.label,
                             Method: () => {
                                 CurrentDeviceId = Device.deviceId;
-                                play()
+
+                                CancelStreamFeed = true;
+                           
                             },
                         };
                     }
