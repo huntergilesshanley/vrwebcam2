@@ -142,7 +142,7 @@ function streamFeed() {
     var imageData;
 
     feedContext.drawImage(video, 0, 0, display.width, display.height);
-    rightEyeContext.drawImage(video, 0, 0, display.width, display.height);
+    //rightEyeContext.drawImage(video, 0, 0, display.width, display.height);
     imageData = feedContext.getImageData(0, 0, display.width, display.height);
 
 
@@ -151,7 +151,7 @@ function streamFeed() {
 
     }
     displayContext.putImageData(imageData, 0, 0);
-    //rightEyeContext.putImageData(imageData, 0, 0);
+    rightEyeContext.putImageData(imageData, 0, 0);
 }
 
 
