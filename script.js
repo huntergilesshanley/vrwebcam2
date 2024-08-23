@@ -91,8 +91,7 @@ let CurrentFacingMode = "user";
 
 function play() {
     navigator.mediaDevices.getUserMedia({
-        video: { width: { min: 360, ideal: 1280, max: 1920 },
-        height: { min: 240, ideal: 720, max: 1080 },deviceId: CurrentDeviceId, CurrentFacingMode: "user"}
+        video: { width: window.innerWidth, height: window.innerHeight, deviceId: CurrentDeviceId, CurrentFacingMode: "user"}
     }).then((stream) => {
         onSuccess(stream);
 
@@ -427,7 +426,7 @@ CurrentDeviceId = Devices[0].deviceId;
         video.style.display = 'none';
         feed.style.display = 'none';
     
-    
+    CancelStreamFeed = true;
         play();
         
     
