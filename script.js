@@ -295,34 +295,9 @@ function streamFeed() {
                 return finaldata;
             }
         },
-        {
-            name: "hueRotate", 
-            routine: (data, width, height, angle = 90) => {
-                let finaldata = data;
-                let cosA = Math.cos(angle * Math.PI / 180);
-                let sinA = Math.sin(angle * Math.PI / 180);
-                
-                for (let i = 0; i < data.length; i += 4) {
-                    let r = data[i];
-                    let g = data[i + 1];
-                    let b = data[i + 2];
-                    
-                    finaldata[i] = Math.min(255, Math.max(0, 
-                        (0.213 + cosA * 0.787 - sinA * 0.213) * r + 
-                        (0.715 - cosA * 0.715 - sinA * 0.715) * g + 
-                        (0.072 - cosA * 0.072 + sinA * 0.928) * b));
-                    finaldata[i + 1] = Math.min(255, Math.max(0, 
-                        (0.213 - cosA * 0.213 + sinA * 0.143) * r + 
-                        (0.715 + cosA * 0.285 + sinA * 0.140) * g + 
-                        (0.072 - cosA * 0.072 - sinA * 0.283) * b));
-                    finaldata[i + 2] = Math.min(255, Math.max(0, 
-                        (0.213 - cosA * 0.213 - sinA * 0.787) * r + 
-                        (0.715 - cosA * 0.715 + sinA * 0.715) * g + 
-                        (0.072 + cosA * 0.928 + sinA * 0.072) * b));
-                }
-                return finaldata;
-            }
-        },
+     
+       
+        
         {
             name: "flipUpsideDown", routine: (data, width, height) => {
                 let finaldata = new Uint8ClampedArray(data.length);
@@ -357,6 +332,42 @@ function streamFeed() {
                 }
                 return finaldata;
             }
+        },
+        {
+            name: "grayscaleExceptGreen", routine: (data, width, height) => {
+                let finaldata = data;
+                for (let i = 0; i < data.length; i += 4) {
+                    let r = data[i];
+                    let g = data[i + 1];
+                    let b = data[i + 2];
+                    if (g > r && g > b) {
+                        continue; 
+                    }
+                    let gray = 0.3 * r + 0.59 * g + 0.11 * b;
+                    finaldata[i] = gray;
+                    finaldata[i + 1] = gray;
+                    finaldata[i + 2] = gray;
+                }
+                return finaldata;
+            }
+        },
+        {
+            name: "grayscaleExceptBlue", routine: (data, width, height) => {
+                let finaldata = data;
+                for (let i = 0; i < data.length; i += 4) {
+                    let r = data[i];
+                    let g = data[i + 1];
+                    let b = data[i + 2];
+                    if (b > r && b > g) {
+                        continue; 
+                    }
+                    let gray = 0.3 * r + 0.59 * g + 0.11 * b;
+                    finaldata[i] = gray;
+                    finaldata[i + 1] = gray;
+                    finaldata[i + 2] = gray;
+                }
+                return finaldata;
+            }
         }
         ,
         {
@@ -378,7 +389,205 @@ function streamFeed() {
                 }
                 return finaldata;
             }
+        },
+        {
+            name: "bloom",
+            routine: (data, width, height) => {
+                let finaldata = data;
+                let tempdata = data;
+                let blurAmount = 2; // Adjust for stronger/weaker bloom
+        
+                // First pass: Apply a simple blur
+                for (let y = 0; y < height; y++) {
+                    for (let x = 0; x < width; x++) {
+                        let r = 0, g = 0, b = 0, count = 0;
+                        for (let ky = -blurAmount; ky <= blurAmount; ky++) {
+                            for (let kx = -blurAmount; kx <= blurAmount; kx++) {
+                                let ny = y + ky;
+                                let nx = x + kx;
+                                if (ny >= 0 && ny < height && nx >= 0 && nx < width) {
+                                    let offset = (ny * width + nx) * 4;
+                                    r += data[offset];
+                                    g += data[offset + 1];
+                                    b += data[offset + 2];
+                                    count++;
+                                }
+                            }
+                        }
+                        let idx = (y * width + x) * 4;
+                        tempdata[idx] = r / count;
+                        tempdata[idx + 1] = g / count;
+                        tempdata[idx + 2] = b / count;
+                        tempdata[idx + 3] = data[idx + 3];
+                    }
+                }
+        
+                // Second pass: Combine the original and blurred image to create bloom effect
+                for (let i = 0; i < data.length; i += 4) {
+                    finaldata[i] = Math.min(255, data[i] + tempdata[i] * 0.5);
+                    finaldata[i + 1] = Math.min(255, data[i + 1] + tempdata[i + 1] * 0.5);
+                    finaldata[i + 2] = Math.min(255, data[i + 2] + tempdata[i + 2] * 0.5);
+                    finaldata[i + 3] = data[i + 3];
+                }
+        
+                return finaldata;
+            }
+        },
+        {
+            name: "sharpen", 
+            routine: (data, width, height) => {
+                let finaldata = new Uint8ClampedArray(data.length);
+        
+                // Define the sharpening kernel
+                const scaleFactor = 4; // Adjust this value to increase/decrease effect
+                const kernel = [
+                    [ 0, -scaleFactor,  0],
+                    [-scaleFactor,  (4 * scaleFactor) + 1, -scaleFactor],
+                    [ 0, -scaleFactor,  0]
+                ];
+                const kernelSize = 3;
+                const kernelHalf = Math.floor(kernelSize / 2);
+        
+                for (let y = 0; y < height; y++) {
+                    for (let x = 0; x < width; x++) {
+                        let r = 0, g = 0, b = 0;
+        
+                        for (let ky = -kernelHalf; ky <= kernelHalf; ky++) {
+                            for (let kx = -kernelHalf; kx <= kernelHalf; kx++) {
+                                let iy = Math.min(height - 1, Math.max(0, y + ky));
+                                let ix = Math.min(width - 1, Math.max(0, x + kx));
+                                let idx = (iy * width + ix) * 4;
+                                let weight = kernel[ky + kernelHalf][kx + kernelHalf];
+        
+                                r += data[idx] * weight;
+                                g += data[idx + 1] * weight;
+                                b += data[idx + 2] * weight;
+                            }
+                        }
+        
+                        let newIdx = (y * width + x) * 4;
+                        finaldata[newIdx] = Math.min(255, Math.max(0, r));
+                        finaldata[newIdx + 1] = Math.min(255, Math.max(0, g));
+                        finaldata[newIdx + 2] = Math.min(255, Math.max(0, b));
+                        finaldata[newIdx + 3] = data[newIdx + 3]; // Keep alpha channel unchanged
+                    }
+                }
+        
+                return finaldata;
+            }
+        },
+        {
+            name: "chromaticAberration", routine: (data, width, height) => {
+                let finaldata = data.slice(); // Copy original data
+                const shift = 8; // Shift for chromatic aberration
+                for (let i = 0; i < data.length; i += 4) {
+                    let rIdx = i;
+                    let gIdx = i + 1;
+                    let bIdx = i + 2;
+        
+                    // Shift red channel to the left
+                    if (rIdx - shift * 4 >= 0) {
+                        finaldata[rIdx] = data[rIdx - shift * 4];
+                    }
+                    // Shift blue channel to the right
+                    if (bIdx + shift * 4 < data.length) {
+                        finaldata[bIdx] = data[bIdx + shift * 4];
+                    }
+                }
+                return finaldata;
+            }
+        },
+       
+    
+        {
+            name: "fishEye", routine: (data, width, height) => {
+                let finaldata = new Uint8ClampedArray(data.length); // Initialize new data
+                const centerX = width / 2;
+                const centerY = height / 2;
+                const radius = Math.min(width, height) / 2;
+        
+                for (let y = 0; y < height; y++) {
+                    for (let x = 0; x < width; x++) {
+                        let dx = x - centerX;
+                        let dy = y - centerY;
+                        let distance = Math.sqrt(dx * dx + dy * dy);
+                        if (distance < radius) {
+                            let r = distance / radius;
+                            let theta = Math.atan2(dy, dx);
+                            let rDistorted = radius * Math.sqrt(r);
+                            let srcX = Math.floor(centerX + rDistorted * Math.cos(theta));
+                            let srcY = Math.floor(centerY + rDistorted * Math.sin(theta));
+                            let srcIdx = (srcY * width + srcX) * 4;
+                            let dstIdx = (y * width + x) * 4;
+                            finaldata[dstIdx] = data[srcIdx];
+                            finaldata[dstIdx + 1] = data[srcIdx + 1];
+                            finaldata[dstIdx + 2] = data[srcIdx + 2];
+                            finaldata[dstIdx + 3] = data[srcIdx + 3];
+                        }
+                    }
+                }
+                return finaldata;
+            }
+        },
+        {
+            name: "duotone", routine: (data, width, height) => {
+                let finaldata = data.slice(); // Copy original data
+                const color1 = [63, 81, 181]; // Dark tone (Blue)
+                const color2 = [255, 193, 7]; // Light tone (Yellow)
+        
+                for (let i = 0; i < data.length; i += 4) {
+                    let avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+                    finaldata[i] = avg < 128 ? color1[0] : color2[0];
+                    finaldata[i + 1] = avg < 128 ? color1[1] : color2[1];
+                    finaldata[i + 2] = avg < 128 ? color1[2] : color2[2];
+                }
+                return finaldata;
+            }
+        },
+       
+        {
+            name: "solarize", routine: (data, width, height) => {
+                let finaldata = data.slice(); // Copy original data
+                for (let i = 0; i < data.length; i += 4) {
+                    finaldata[i] = data[i] > 128 ? 255 - data[i] : data[i];
+                    finaldata[i + 1] = data[i + 1] > 128 ? 255 - data[i + 1] : data[i + 1];
+                    finaldata[i + 2] = data[i + 2] > 128 ? 255 - data[i + 2] : data[i + 2];
+                }
+                return finaldata;
+            }
+        },
+  
+        {
+            name: "morph",
+            routine: (data, width, height) => {
+                let finaldata = new Uint8ClampedArray(data.length);
+                let period = 20;
+                
+                for (let y = 0; y < height; y++) {
+                    for (let x = 0; x < width; x++) {
+                        let idx = (y * width + x) * 4;
+                        let offsetX = Math.sin(y / period) * 10;
+                        let offsetY = Math.cos(x / period) * 10;
+                        
+                        let newX = Math.min(Math.max(x + offsetX, 0), width - 1);
+                        let newY = Math.min(Math.max(y + offsetY, 0), height - 1);
+                        let newIdx = (Math.round(newY) * width + Math.round(newX)) * 4;
+                        
+                        finaldata[idx] = data[newIdx];
+                        finaldata[idx + 1] = data[newIdx + 1];
+                        finaldata[idx + 2] = data[newIdx + 2];
+                        finaldata[idx + 3] = data[newIdx + 3];
+                    }
+                }
+                
+                return finaldata;
+            }
         }
+    
+      
+        
+                
+        
         
         
         
@@ -388,6 +597,37 @@ function streamFeed() {
 
 
     ];
+
+    let hueRotateFunction = (data, angle) => {
+            let finaldata = data;
+            let cosA = Math.cos(angle * Math.PI / 180);
+            let sinA = Math.sin(angle * Math.PI / 180);
+            
+            for (let i = 0; i < data.length; i += 4) {
+                let r = data[i];
+                let g = data[i + 1];
+                let b = data[i + 2];
+                
+                finaldata[i] = Math.min(255, Math.max(0, 
+                    (0.213 + cosA * 0.787 - sinA * 0.213) * r + 
+                    (0.715 - cosA * 0.715 - sinA * 0.715) * g + 
+                    (0.072 - cosA * 0.072 + sinA * 0.928) * b));
+                finaldata[i + 1] = Math.min(255, Math.max(0, 
+                    (0.213 - cosA * 0.213 + sinA * 0.143) * r + 
+                    (0.715 + cosA * 0.285 + sinA * 0.140) * g + 
+                    (0.072 - cosA * 0.072 - sinA * 0.283) * b));
+                finaldata[i + 2] = Math.min(255, Math.max(0, 
+                    (0.213 - cosA * 0.213 - sinA * 0.787) * r + 
+                    (0.715 - cosA * 0.715 + sinA * 0.715) * g + 
+                    (0.072 + cosA * 0.928 + sinA * 0.072) * b));
+            }
+            return finaldata;
+        };
+    
+    for(i=0;i<365-365/8.111;i+=365/8.111) {
+        let Angle = i;
+        effects.push({name: `hueRotate${Math.round(i)}degrees`, routine: (data, width, height) => { return hueRotateFunction(data, Angle)}})
+    }
 
     currentEffect = effects[0];
 
