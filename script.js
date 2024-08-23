@@ -1,4 +1,5 @@
 
+
 var video = document.createElement('video'),
     feed = document.createElement('canvas'),
     display = document.querySelector("#leftEye"),
@@ -141,6 +142,7 @@ function streamFeed() {
     var imageData;
 
     feedContext.drawImage(video, 0, 0, display.width, display.height);
+    rightEyeContext.drawImage(video, 0, 0, display.width, display.height);
     imageData = feedContext.getImageData(0, 0, display.width, display.height);
 
 
@@ -149,7 +151,7 @@ function streamFeed() {
 
     }
     displayContext.putImageData(imageData, 0, 0);
-    rightEyeContext.putImageData(imageData, 0, 0);
+    //rightEyeContext.putImageData(imageData, 0, 0);
 }
 
 
@@ -165,7 +167,11 @@ function streamFeed() {
 
 
 
-   
+   /*
+NW N NE
+ W   E
+SW S SE
+   */
 
 
 
@@ -173,8 +179,32 @@ function streamFeed() {
 
 
     var effects = [
+       
         {
             name: "none", routine: data => { return data }
+        },
+        {
+            name: "LSD", routine: (data, width, height) => {
+                let finaldata = data;
+                for (j = 0; j < data.length; j += 4) {
+                   let RED = data[j];
+                   let BLUE = data[j+1];
+                   let GREEN = data[j+2];
+
+                
+                    RED= RED*5%255;
+                    BLUE = BLUE*5%255
+                   GREEN = GREEN *5%255;
+
+                   
+                    finaldata[j] = RED*5%255;
+                    finaldata[j + 1] = BLUE*5%255
+                    finaldata[j + 2] = GREEN *5%255;
+
+                
+                }
+                return finaldata;
+            }
         },
         {
             name: "quantize", routine: (data, width, height) => {
@@ -358,13 +388,34 @@ function streamFeed() {
                     let r = data[i];
                     let g = data[i + 1];
                     let b = data[i + 2];
-                    if (b > r && b > g) {
+                    if (r > g && r > b) {
                         continue; 
                     }
                     let gray = 0.3 * r + 0.59 * g + 0.11 * b;
                     finaldata[i] = gray;
                     finaldata[i + 1] = gray;
                     finaldata[i + 2] = gray;
+                }
+                return finaldata;
+            }
+        },
+        
+        {
+            name: "badDayToBeBlue", routine: (data, width, height) => {
+                let finaldata = data;
+                for (let i = 0; i < data.length; i += 4) {
+                    let r = data[i];
+                    let g = data[i + 1];
+                    let b = data[i + 2];
+                    if (b > r && b > g) {
+                        let gray = 0.3 * r + 0.59 * g + 0.11 * b;
+                        finaldata[i] = gray;
+                        finaldata[i + 1] = gray;
+                        finaldata[i + 2] = gray;
+                        continue; 
+                    }
+              
+                   
                 }
                 return finaldata;
             }
