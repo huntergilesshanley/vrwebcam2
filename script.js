@@ -91,7 +91,7 @@ let CurrentFacingMode = "user";
 
 function play() {
     navigator.mediaDevices.getUserMedia({
-        video: { width: window.innerWidth, height: window.innerHeight }
+        video: { width: window.innerWidth, height: window.innerHeight, deviceId: CurrentDeviceId}
     }).then((stream) => {
         onSuccess(stream);
 
