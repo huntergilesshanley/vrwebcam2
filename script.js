@@ -128,6 +128,7 @@ function onSuccess(stream) {
 }
 
 
+let lastImageData = 0;
 
 function streamFeed() {
 
@@ -147,13 +148,18 @@ function streamFeed() {
     //rightEyeContext.drawImage(video, 0, 0, window.innerWidth, display.height);
     imageData = feedContext.getImageData(0, 0, window.innerWidth, display.height);
 
+if(lastImageData == 0) {
+    lastImageData = imageData;
+}
 
     if (typeof currentEffect !== 'undefined') {
-        imageData.data.set(currentEffect.routine(new Uint8ClampedArray(imageData.data), imageData.width, imageData.height));
+        imageData.data.set(currentEffect.routine(new Uint8ClampedArray(imageData.data), imageData.width, imageData.height, lastImageData.data));
 
     }
     displayContext.putImageData(imageData, -window.innerWidth/4, 0);
     rightEyeContext.putImageData(imageData,  -window.innerWidth/4, 0);
+
+    lastImageData = imageData;
 }
 
 
@@ -181,19 +187,23 @@ SW S SE
 
 
     var effects = [
+      
        
         {
             name: "none", routine: data => { return data }
         },
         {
             name: "LSD", routine: (data, width, height) => {
+                
                 let finaldata = data;
+
                 for (j = 0; j < data.length; j += 4) {
                    let RED = data[j];
                    let BLUE = data[j+1];
                    let GREEN = data[j+2];
 
-                
+
+               
                     RED= RED*5%255;
                     BLUE = BLUE*5%255
                    GREEN = GREEN *5%255;
@@ -208,10 +218,69 @@ SW S SE
                 return finaldata;
             }
         },
+      
+        {
+            name: "LSLOW", routine: (data, width, height, lastdata) => {
+                let finaldata = data;
+                let SIZE = 5;
+
+                let tempdata = data;
+                let blurAmount = 4; 
+        
+ 
+                for (let y = 0; y < height; y++) {
+                    for (let x = 0; x < width; x++) {
+                        let r = 0, g = 0, b = 0, count = 0;
+                        for (let ky = -blurAmount; ky <= blurAmount; ky++) {
+                            for (let kx = -blurAmount; kx <= blurAmount; kx++) {
+                                let ny = y + ky;
+                                let nx = x + kx;
+                                if (ny >= 0 && ny < height && nx >= 0 && nx < width) {
+                                    let offset = (ny * width + nx) * 4;
+                                    r += data[offset];
+                                    g += data[offset + 1];
+                                    b += data[offset + 2];
+                                    count++;
+                                }
+                            }
+                        }
+                        let idx = (y * width + x) * 4;
+                        tempdata[idx] = r / count;
+                        tempdata[idx + 1] = g / count;
+                        tempdata[idx + 2] = b / count;
+                        tempdata[idx + 3] = data[idx + 3];
+                    }
+                }
+
+                for (j = 0; j < data.length; j += 4) {
+
+                    RED = Math.max(0, Math.min(255, Math.ceil(tempdata[j] / SIZE) * SIZE));
+                    GREEN = Math.max(0, Math.min(255, Math.ceil(tempdata[j + 1] / SIZE) *SIZE));
+                    BLUE= Math.max(0, Math.min(255, Math.ceil(tempdata[j + 2] / SIZE) * SIZE));
+
+                    RED= RED*5%255;
+                    BLUE = BLUE*5%255
+                   GREEN = GREEN *5%255;
+
+                   if(Math.abs(RED-lastdata[j]) > 50 || Math.abs(GREEN-lastdata[j+1]) > 50  || Math.abs(BLUE-lastdata[j+2]) > 50 ) {
+                    finaldata[j] = (lastdata[j]*3+RED)/4;
+                    finaldata[j + 1] = (lastdata[j+1]+GREEN)/2;
+                    finaldata[j + 2] = (lastdata[j+2]+BLUE)/2;
+                    continue;
+                   }
+                    finaldata[j] = (RED*5%255);
+                    finaldata[j + 1] =  (lastdata[j+1]+(BLUE*5%255))/2
+                    finaldata[j + 2] =  (lastdata[j+2]+(GREEN*5%255))/2;
+
+                }
+                return finaldata;
+            }
+        },
         {
             name: "LSDBLACK", routine: (data, width, height) => {
                 let finaldata = data;
                 for (j = 0; j < data.length; j += 4) {
+                    
                    let RED = data[j];
                    let BLUE = data[j+1];
                    let GREEN = data[j+2];
