@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<style>
+			body, html {padding:0;margin: 0;overflow:hidden;width:100vw;background-color: black;}
+            canvas {
+                width: 50vw;
+        margin: 0;
+        padding: 0;
+        height: 100vh;
+        display: inline-block;
+        object-fit: cover;
+            }
+            #settings {
+                display: flex;
+                flex-direction: column;
+                gap: 1em;
+                width: 100%;
+               align-items: center;
+                padding: 1em 0px;
+            }
+            select {
+                padding: 1em;
+                width: 75%;
+                font-size: xxx-large;
+                
+            }
+		</style>
+	</head>
+
+	<body>
+    
+    <div id="feed">
+<canvas id="leftEye"></canvas>
+    <canvas id="rightEye" style="float:right"></canvas>
+    </div>
+    <div id="settings" style="display: none"></div>
+		<script src="script.js"></script>
+
+	</body>
+</html>
