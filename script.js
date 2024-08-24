@@ -172,26 +172,7 @@ if(lastImageData == 0) {
             name: "none", routine: data => { return data }
         },
             
-        {
-            name: "badDayToBeCaucasianSkinColorOrOrange", routine: (data, width, height) => {
-                let finaldata = data;
-                for (let i = 0; i < data.length; i += 4) {
-                    let r = data[i];
-                    let g = data[i + 1];
-                    let b = data[i + 2];
-                    if (r> g&&g>b) {
-                        let gray = 0.3 * r + 0.59 * g + 0.11 * b;
-                        finaldata[i] = gray;
-                        finaldata[i + 1] = gray;
-                        finaldata[i + 2] = gray;
-                        continue; 
-                    }
-              
-                   
-                }
-                return finaldata;
-            }
-        },
+      
         {
             name: "saturateGreen", routine: (data, width, height) => {
                 let finaldata = data;
@@ -212,62 +193,9 @@ if(lastImageData == 0) {
                 return finaldata;
             }
         },
-        {
-            name: "onlyBlue", routine: (data, width, height) => {
-                let finaldata = data;
-                for (let i = 0; i < data.length; i += 4) {
-                    let r = data[i];
-                    let g = data[i + 1];
-                    let b = data[i + 2];
-                    if (b > g && b > r) {
-                        continue; 
-                    }
-                   
-                    finaldata[i] = 0;
-                    finaldata[i + 1] = 0;
-                    finaldata[i + 2] = 0;
-                }
-                return finaldata;
-            }
-        },
+      
        
-        {
-            name: "flipBlueUpsideDown", routine: (data, width, height) => {
-                let finaldata = new Uint8ClampedArray(data.length);
-                for (let y = 0; y < height; y++) {
-                    for (let x = 0; x < width; x++) { 
-                        let srcIndex = (y * width + x) * 4;
-                        let destIndex = ((height - 1 - y) * width + x) * 4;
-                        
-                        let RED= data[srcIndex];
-                        let GREEN= data[srcIndex + 1];
-                        let BLUE= data[srcIndex + 2];
-                        let ALPHA =  data[srcIndex + 3];
-
-
-                        if (BLUE > 255/4 && RED < BLUE / 1.5) {
-                        
-                       
-                        finaldata[destIndex] = RED;
-                        finaldata[destIndex + 1]  = GREEN;
-                        finaldata[destIndex + 2] = BLUE;
-                        finaldata[destIndex + 3] = ALPHA;
-
-                        finaldata[srcIndex] = data[srcIndex];
-                        finaldata[srcIndex+1]=data[srcIndex+1];
-                        finaldata[srcIndex+2]=data[srcIndex+2];
-                        finaldata[srcIndex+3]=data[srcIndex+3];
-                        } else {
-                            finaldata[srcIndex] = RED;
-                            finaldata[srcIndex+1]=GREEN;
-                            finaldata[srcIndex+2]=BLUE;
-                            finaldata[srcIndex+3]=ALPHA;
-                        }
-                    }
-                }
-                return finaldata;
-            }
-        },
+       
         {
             name: "removeMostProminentHue", routine: (data, width, height) => {
                 let finaldata = data;
@@ -451,7 +379,26 @@ if(lastImageData == 0) {
             }
         },
      
-       
+         {
+            name: "badDayToBeOrange", routine: (data, width, height) => {
+                let finaldata = data;
+                for (let i = 0; i < data.length; i += 4) {
+                    let r = data[i];
+                    let g = data[i + 1];
+                    let b = data[i + 2];
+                    if (r> g&&g>b) {
+                        let gray = 0.3 * r + 0.59 * g + 0.11 * b;
+                        finaldata[i] = gray;
+                        finaldata[i + 1] = gray;
+                        finaldata[i + 2] = gray;
+                        continue; 
+                    }
+              
+                   
+                }
+                return finaldata;
+            }
+        },
         
         {
             name: "flipUpsideDown", routine: (data, width, height) => {
