@@ -167,6 +167,7 @@ if(lastImageData == 0) {
 
     var effects = [
       
+      
        
         {
             name: "none", routine: data => { return data }
@@ -246,7 +247,49 @@ if(lastImageData == 0) {
                 return finaldata;
             }
         },
-       
+        {
+            name: "bottomSobel", 
+            routine: (data, width, height) => {
+                let finaldata = new Uint8ClampedArray(data.length);
+        
+              
+            
+                const kernel = [
+                    [ -1,-2,-1],
+                    [ 0,0,0],
+                    [ 1,2,1]
+                ];
+                const kernelSize = 3;
+                const kernelHalf = Math.floor(kernelSize / 2);
+        
+                for (let y = 0; y < height; y++) {
+                    for (let x = 0; x < width; x++) {
+                        let r = 0, g = 0, b = 0;
+        
+                        for (let ky = -kernelHalf; ky <= kernelHalf; ky++) {
+                            for (let kx = -kernelHalf; kx <= kernelHalf; kx++) {
+                                let iy = Math.min(height - 1, Math.max(0, y + ky));
+                                let ix = Math.min(width - 1, Math.max(0, x + kx));
+                                let idx = (iy * width + ix) * 4;
+                                let weight = kernel[ky + kernelHalf][kx + kernelHalf];
+        
+                                r += data[idx] * weight;
+                                g += data[idx + 1] * weight;
+                                b += data[idx + 2] * weight;
+                            }
+                        }
+        
+                        let newIdx = (y * width + x) * 4;
+                        finaldata[newIdx] = Math.min(255, Math.max(0, r));
+                        finaldata[newIdx + 1] = Math.min(255, Math.max(0, g));
+                        finaldata[newIdx + 2] = Math.min(255, Math.max(0, b));
+                        finaldata[newIdx + 3] = data[newIdx + 3]; // Keep alpha channel unchanged
+                    }
+                }
+        
+                return finaldata;
+            }
+        },
         {
             name: "quantize", routine: (data, width, height) => {
                 let finaldata = data;
@@ -556,6 +599,7 @@ if(lastImageData == 0) {
                 return finaldata;
             }
         },
+       
         {
             name: "sharpen", 
             routine: (data, width, height) => {
