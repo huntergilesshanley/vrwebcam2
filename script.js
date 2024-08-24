@@ -165,145 +165,160 @@ if(lastImageData == 0) {
 
 
 
-
-
-
-
-
-
-
-
-
-
-   /*
-NW N NE
- W   E
-SW S SE
-   */
-
-
-
-
-
-
     var effects = [
       
        
         {
             name: "none", routine: data => { return data }
         },
+            
         {
-            name: "LSD", routine: (data, width, height) => {
-                
+            name: "badDayToBeCaucasianSkinColorOrOrange", routine: (data, width, height) => {
                 let finaldata = data;
-
-                for (j = 0; j < data.length; j += 4) {
-                   let RED = data[j];
-                   let BLUE = data[j+1];
-                   let GREEN = data[j+2];
-
-
-               
-                    RED= RED*5%255;
-                    BLUE = BLUE*5%255
-                   GREEN = GREEN *5%255;
-
+                for (let i = 0; i < data.length; i += 4) {
+                    let r = data[i];
+                    let g = data[i + 1];
+                    let b = data[i + 2];
+                    if (r> g&&g>b) {
+                        let gray = 0.3 * r + 0.59 * g + 0.11 * b;
+                        finaldata[i] = gray;
+                        finaldata[i + 1] = gray;
+                        finaldata[i + 2] = gray;
+                        continue; 
+                    }
+              
                    
-                    finaldata[j] = RED*5%255;
-                    finaldata[j + 1] = BLUE*5%255
-                    finaldata[j + 2] = GREEN *5%255;
-
-                
                 }
                 return finaldata;
             }
         },
-      
         {
-            name: "LSLOW", routine: (data, width, height, lastdata) => {
+            name: "saturateGreen", routine: (data, width, height) => {
                 let finaldata = data;
-                let SIZE = 5;
-
-                let tempdata = data;
-                let blurAmount = 4; 
+                let saturation =3; 
+                for (let i = 0; i < data.length; i += 4) {
+                    let r = data[i];
+                    let g = data[i + 1];
+                    let b = data[i + 2];
+                    if (g > r && g > b) {
+                        
+                    let luminance = 0.3 * r + 0.59 * g + 0.11 * b;
         
- 
-                for (let y = 0; y < height; y++) {
-                    for (let x = 0; x < width; x++) {
-                        let r = 0, g = 0, b = 0, count = 0;
-                        for (let ky = -blurAmount; ky <= blurAmount; ky++) {
-                            for (let kx = -blurAmount; kx <= blurAmount; kx++) {
-                                let ny = y + ky;
-                                let nx = x + kx;
-                                if (ny >= 0 && ny < height && nx >= 0 && nx < width) {
-                                    let offset = (ny * width + nx) * 4;
-                                    r += data[offset];
-                                    g += data[offset + 1];
-                                    b += data[offset + 2];
-                                    count++;
-                                }
-                            }
-                        }
-                        let idx = (y * width + x) * 4;
-                        tempdata[idx] = r / count;
-                        tempdata[idx + 1] = g / count;
-                        tempdata[idx + 2] = b / count;
-                        tempdata[idx + 3] = data[idx + 3];
+                    finaldata[i] = Math.min(255, luminance + (r - luminance) * saturation);
+                    finaldata[i + 1] = Math.min(255, luminance + (g - luminance) * saturation);
+                    finaldata[i + 2] = Math.min(255, luminance + (b - luminance) * saturation);
                     }
                 }
+                return finaldata;
+            }
+        },
+        {
+            name: "onlyBlue", routine: (data, width, height) => {
+                let finaldata = data;
+                for (let i = 0; i < data.length; i += 4) {
+                    let r = data[i];
+                    let g = data[i + 1];
+                    let b = data[i + 2];
+                    if (b > g && b > r) {
+                        continue; 
+                    }
+                   
+                    finaldata[i] = 0;
+                    finaldata[i + 1] = 0;
+                    finaldata[i + 2] = 0;
+                }
+                return finaldata;
+            }
+        },
+       
+        {
+            name: "flipBlueUpsideDown", routine: (data, width, height) => {
+                let finaldata = new Uint8ClampedArray(data.length);
+                for (let y = 0; y < height; y++) {
+                    for (let x = 0; x < width; x++) { 
+                        let srcIndex = (y * width + x) * 4;
+                        let destIndex = ((height - 1 - y) * width + x) * 4;
+                        
+                        let RED= data[srcIndex];
+                        let GREEN= data[srcIndex + 1];
+                        let BLUE= data[srcIndex + 2];
+                        let ALPHA =  data[srcIndex + 3];
 
-                for (j = 0; j < data.length; j += 4) {
 
-                    RED = Math.max(0, Math.min(255, Math.ceil(tempdata[j] / SIZE) * SIZE));
-                    GREEN = Math.max(0, Math.min(255, Math.ceil(tempdata[j + 1] / SIZE) *SIZE));
-                    BLUE= Math.max(0, Math.min(255, Math.ceil(tempdata[j + 2] / SIZE) * SIZE));
+                        if (BLUE > 255/4 && RED < BLUE / 1.5) {
+                        
+                       
+                        finaldata[destIndex] = RED;
+                        finaldata[destIndex + 1]  = GREEN;
+                        finaldata[destIndex + 2] = BLUE;
+                        finaldata[destIndex + 3] = ALPHA;
 
-                    RED= RED*5%255;
-                    BLUE = BLUE*5%255
-                   GREEN = GREEN *5%255;
-
-                   if(Math.abs(RED-lastdata[j]) > 50 || Math.abs(GREEN-lastdata[j+1]) > 50  || Math.abs(BLUE-lastdata[j+2]) > 50 ) {
-                    finaldata[j] = (lastdata[j]*3+RED)/4;
-                    finaldata[j + 1] = (lastdata[j+1]+GREEN)/2;
-                    finaldata[j + 2] = (lastdata[j+2]+BLUE)/2;
-                    continue;
-                   }
-                    finaldata[j] = (RED*5%255);
-                    finaldata[j + 1] =  (lastdata[j+1]+(BLUE*5%255))/2
-                    finaldata[j + 2] =  (lastdata[j+2]+(GREEN*5%255))/2;
-
+                        finaldata[srcIndex] = data[srcIndex];
+                        finaldata[srcIndex+1]=data[srcIndex+1];
+                        finaldata[srcIndex+2]=data[srcIndex+2];
+                        finaldata[srcIndex+3]=data[srcIndex+3];
+                        } else {
+                            finaldata[srcIndex] = RED;
+                            finaldata[srcIndex+1]=GREEN;
+                            finaldata[srcIndex+2]=BLUE;
+                            finaldata[srcIndex+3]=ALPHA;
+                        }
+                    }
                 }
                 return finaldata;
             }
         },
         {
-            name: "LSDBLACK", routine: (data, width, height) => {
+            name: "removeMostProminentHue", routine: (data, width, height) => {
                 let finaldata = data;
+                let RCount = 0;
+                let GCount = 0;
+                let BCount = 0;
+
                 for (j = 0; j < data.length; j += 4) {
-                    
                    let RED = data[j];
                    let BLUE = data[j+1];
                    let GREEN = data[j+2];
-
-                if(RED > (BLUE + GREEN) / 1.7 || GREEN > (BLUE + RED) / 1.7|| BLUE > (RED + GREEN) / 1.7) {
-                    finaldata[j] = 0;
-                    finaldata[j + 1] = 0;
-                    finaldata[j + 2] =0;
-
-                   continue;
+                   
+                   if(RED > BLUE && RED > GREEN) {
+                    RCount++;
+                   }
+                   if(GREEN > RED && GREEN > BLUE) {
+                    GCount++;
+                   }
+                   if(BLUE > RED && BLUE > GREEN) {
+                    BCount++;
+                   }
                 }
-                RED= RED*5%255;
-                BLUE = BLUE*5%255
-               GREEN = GREEN *5%255;
-                    finaldata[j] = RED*5%255;
-                    finaldata[j + 1] = BLUE*5%255
-                    finaldata[j + 2] = GREEN *5%255;
-
+                for (j = 0; j < data.length; j += 4) {
+                    let RED = data[j];
+                    let BLUE = data[j+1];
+                    let GREEN = data[j+2];
+                    
+                    if(RED > BLUE && RED > GREEN && Math.max(RCount, GCount, BCount) == RCount) {
+                        let gray = (0.299 * data[j] + 0.587 * data[j + 1] + 0.122 * data[j + 2]);
+                        finaldata[j] = gray;
+                        finaldata[j + 1] = gray;
+                        finaldata[j + 2] = gray;
+                    }
+                    if(GREEN > RED && GREEN > BLUE && Math.max(RCount, GCount, BCount) == GCount) {
+                        let gray = (0.299 * data[j] + 0.587 * data[j + 1] + 0.122 * data[j + 2]);
+                        finaldata[j] = gray;
+                        finaldata[j + 1] = gray;
+                        finaldata[j + 2] = gray;
+                    }
+                    if(BLUE > RED && BLUE > GREEN && Math.max(RCount, GCount, BCount) == BCount) {
+                        let gray = (0.299 * data[j] + 0.587 * data[j + 1] + 0.122 * data[j + 2]);
+                        finaldata[j] = gray;
+                        finaldata[j + 1] = gray;
+                        finaldata[j + 2] = gray;
+                    }
                 
                 }
                 return finaldata;
             }
         },
+       
         {
             name: "quantize", routine: (data, width, height) => {
                 let finaldata = data;
@@ -312,6 +327,18 @@ SW S SE
                     finaldata[j + 1] = Math.max(0, Math.min(255, Math.ceil(finaldata[j + 1] / 50) * 50));
                     finaldata[j + 2] = Math.max(0, Math.min(255, Math.ceil(finaldata[j + 2] / 50) * 50));
 
+                }
+                return finaldata;
+            }
+        },
+        {
+            name: "grayscale", routine: (data, width, height) => {
+                let finaldata = data;
+                for (j = 0; j < data.length; j += 4) {
+                    let gray = (0.299 * data[j] + 0.587 * data[j + 1] + 0.122 * data[j + 2]);
+                    finaldata[j] = gray;
+                    finaldata[j + 1] = gray;
+                    finaldata[j + 2] = gray;
                 }
                 return finaldata;
             }
@@ -732,7 +759,6 @@ SW S SE
                 return finaldata;
             }
         }
-    
       
         
                 
